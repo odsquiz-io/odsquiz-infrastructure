@@ -118,6 +118,20 @@ Terraform state is stored in:
 gs://odsquiz-terraform/odsquiz-infrastructure
 ```
 
+## Common Commands
+
+Create or update the Cloud Run services and Cloud SQL database stack:
+
+```bash
+terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main
+```
+
+Destroy the Cloud Run services and Cloud SQL database stack:
+
+```bash
+terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main
+```
+
 ## Outputs
 
 Terraform returns:
