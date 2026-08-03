@@ -13,6 +13,11 @@ resource "google_project_service" "secretmanager" {
   disable_on_destroy = false
 }
 
+resource "google_project_service" "compute" {
+  service            = "compute.googleapis.com"
+  disable_on_destroy = false
+}
+
 resource "google_secret_manager_secret" "db_user" {
   secret_id           = var.db_user
   deletion_protection = false

@@ -1,8 +1,9 @@
 resource "google_cloud_run_v2_service" "auth" {
-  name                = var.auth_service_name
-  location            = var.region
-  ingress             = "INGRESS_TRAFFIC_ALL"
-  deletion_protection = false
+  name                 = var.auth_service_name
+  location             = var.region
+  ingress              = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  invoker_iam_disabled = true
+  deletion_protection  = false
 
   template {
     service_account = var.cloud_run_service_account
@@ -85,13 +86,18 @@ resource "google_cloud_run_v2_service" "auth" {
     google_project_iam_member.cloud_run_sql_client,
     google_project_service.run,
   ]
+
+  lifecycle {
+    ignore_changes = [scaling]
+  }
 }
 
 resource "google_cloud_run_v2_service" "initiatives" {
-  name                = var.initiatives_service_name
-  location            = var.region
-  ingress             = "INGRESS_TRAFFIC_ALL"
-  deletion_protection = false
+  name                 = var.initiatives_service_name
+  location             = var.region
+  ingress              = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  invoker_iam_disabled = true
+  deletion_protection  = false
 
   template {
     service_account = var.cloud_run_service_account
@@ -174,14 +180,18 @@ resource "google_cloud_run_v2_service" "initiatives" {
     google_project_iam_member.cloud_run_sql_client,
     google_project_service.run,
   ]
+
+  lifecycle {
+    ignore_changes = [scaling]
+  }
 }
 
 resource "google_cloud_run_v2_service" "frontend" {
-  name                = var.frontend_service_name
-  location            = var.region
-  ingress             = "INGRESS_TRAFFIC_ALL"
+  name                 = var.frontend_service_name
+  location             = var.region
+  ingress              = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
   invoker_iam_disabled = true
-  deletion_protection = false
+  deletion_protection  = false
 
   template {
     service_account = var.cloud_run_service_account
@@ -192,11 +202,11 @@ resource "google_cloud_run_v2_service" "frontend" {
         container_port = 3000
       }
       env {
-        name  = "NEXT_PUBLIC_AUTH_API_URL"
+        name  = "AUTH_API_URL"
         value = var.auth_api_url != "" ? var.auth_api_url : google_cloud_run_v2_service.auth.uri
       }
       env {
-        name  = "NEXT_PUBLIC_INITIATIVES_API_URL"
+        name  = "INITIATIVES_API_URL"
         value = var.initiatives_api_url != "" ? var.initiatives_api_url : google_cloud_run_v2_service.initiatives.uri
       }
       resources {
@@ -217,4 +227,8 @@ resource "google_cloud_run_v2_service" "frontend" {
     google_cloud_run_v2_service.auth,
     google_cloud_run_v2_service.initiatives,
   ]
+
+  lifecycle {
+    ignore_changes = [scaling]
+  }
 }

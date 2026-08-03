@@ -13,6 +13,16 @@ output "frontend_service_url" {
   value       = google_cloud_run_v2_service.frontend.uri
 }
 
+output "load_balancer_ip" {
+  description = "Global IP address for the external Application Load Balancer."
+  value       = google_compute_global_address.odsquiz_lb.address
+}
+
+output "load_balancer_http_url" {
+  description = "HTTP URL for the external Application Load Balancer."
+  value       = "http://${google_compute_global_address.odsquiz_lb.address}"
+}
+
 output "database_connection_name" {
   description = "Cloud SQL instance connection name."
   value       = google_sql_database_instance.main.connection_name

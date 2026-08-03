@@ -7,6 +7,7 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - Required Google Cloud APIs:
   - Cloud Run
   - Cloud SQL Admin
+  - Compute Engine
   - Secret Manager
 - Secret Manager secret containers:
   - `DB_USER`
@@ -26,6 +27,13 @@ Terraform configuration for the current ODS Quiz development environment on Goog
   - `odsquiz-auth`
   - `odsquiz-initiatives`
   - `odsquiz-frontend`
+- External HTTP Application Load Balancer:
+  - global static IP
+  - serverless NEGs
+  - backend services
+  - URL map
+  - target HTTP proxy
+  - global forwarding rule on port `80`
 
 ## File Structure
 
@@ -33,8 +41,9 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - `services.tf`: Google Cloud APIs, Secret Manager secrets, and project IAM bindings.
 - `database.tf`: Cloud SQL instance, application database, and database user.
 - `apis.tf`: Cloud Run services for auth, initiatives, and frontend.
+- `load-balancer.tf`: External HTTP Application Load Balancer and path routing.
 - `variables.tf`: Input variables and defaults.
-- `outputs.tf`: Service URLs, database connection name, and secret names.
+- `outputs.tf`: Service URLs, load balancer URL/IP, database connection name, and secret names.
 - `terraform.tfvars.example`: Example values for the dev environment.
 - `imports.tf`: Terraform import blocks for existing APIs and secrets.
 - `main.tf`: currently empty.
@@ -49,6 +58,7 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - Uses Cloud SQL Unix socket volume.
 - Reads `JWTSecret`, `DB_USER`, and `DB_PASSWORD` from Secret Manager.
 - Receives database settings through environment variables.
+- Ingress is restricted to internal traffic and external Application Load Balancers.
 
 `odsquiz-initiatives`:
 
@@ -57,13 +67,32 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - Uses Cloud SQL Unix socket volume.
 - Reads `JWTSecret`, `DB_USER`, and `DB_PASSWORD` from Secret Manager.
 - Receives database settings through environment variables.
+- Ingress is restricted to internal traffic and external Application Load Balancers.
 
 `odsquiz-frontend`:
 
 - Image: `var.frontend_image`
 - Port: `3000`
-- Currently receives backend service URLs through environment variables.
-- The application code is being moved toward same-origin `/api/...` calls for a future Load Balancer.
+- Receives `AUTH_API_URL` and `INITIATIVES_API_URL` for server-side rewrites.
+- Ingress is restricted to internal traffic and external Application Load Balancers.
+
+## Load Balancer Routing
+
+Current public entry point:
+
+```text
+http://136.68.80.85
+```
+
+Path routing:
+
+```text
+/api/auth         -> odsquiz-auth
+/api/auth/*       -> odsquiz-auth
+/api/initiatives  -> odsquiz-initiatives
+/api/initiatives/* -> odsquiz-initiatives
+/*                -> odsquiz-frontend
+```
 
 ## Current Defaults
 
@@ -120,16 +149,16 @@ gs://odsquiz-terraform/odsquiz-infrastructure
 
 ## Common Commands
 
-Create or update the Cloud Run services and Cloud SQL database stack:
+Create or update the Cloud Run services, Cloud SQL database stack, and load balancer:
 
 ```bash
-terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main
+terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http
 ```
 
-Destroy the Cloud Run services and Cloud SQL database stack:
+Destroy the Cloud Run services, Cloud SQL database stack, and load balancer:
 
 ```bash
-terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main
+terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http
 ```
 
 ## Outputs
@@ -139,6 +168,8 @@ Terraform returns:
 - `auth_service_url`
 - `initiatives_service_url`
 - `frontend_service_url`
+- `load_balancer_ip`
+- `load_balancer_http_url`
 - `database_connection_name`
 - `database_name`
 - `database_user_secret`
@@ -146,12 +177,4 @@ Terraform returns:
 
 ## Next Infrastructure Step
 
-The next planned infrastructure change is an external Application Load Balancer with path-based routing:
-
-```text
-/api/auth/*        -> odsquiz-auth
-/api/initiatives*  -> odsquiz-initiatives
-/*                 -> odsquiz-frontend
-```
-
-After the Load Balancer is working, Cloud Run ingress should be restricted so backend services are not accessed directly.
+The next planned infrastructure change is adding a custom domain and HTTPS with a managed certificate.
