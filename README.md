@@ -8,6 +8,7 @@ Terraform configuration for the current ODS Quiz development environment on Goog
   - Cloud Run
   - Cloud SQL Admin
   - Compute Engine
+  - Cloud DNS
   - Secret Manager
 - Secret Manager secret containers:
   - `DB_USER`
@@ -34,6 +35,11 @@ Terraform configuration for the current ODS Quiz development environment on Goog
   - URL map
   - target HTTP proxy
   - global forwarding rule on port `80`
+- Optional custom domain and HTTPS:
+  - Google-managed SSL certificate
+  - target HTTPS proxy
+  - global forwarding rule on port `443`
+  - HTTP-to-HTTPS redirect after `custom_domains` is configured
 
 ## File Structure
 
@@ -84,6 +90,12 @@ Current public entry point:
 http://136.68.80.85
 ```
 
+After configuring `custom_domains`, the public entry point is:
+
+```text
+https://<your-domain>
+```
+
 Path routing:
 
 ```text
@@ -121,6 +133,15 @@ db_password       = "DB_PASSWORD"
 jwt_secret        = "JWT_SECRET"
 ```
 
+Custom domains:
+
+```hcl
+custom_domains = []
+```
+
+Set this to one or more DNS names. When using Cloudflare, set
+`cloudflare_zone_id` too and Terraform creates the `A` records automatically.
+
 ## Usage
 
 Initialize Terraform:
@@ -141,6 +162,55 @@ Apply changes:
 terraform apply
 ```
 
+## Custom Domain and HTTPS
+
+1. Choose the domain name, for example:
+
+```hcl
+custom_domains = ["odsquiz.example.com"]
+```
+
+2. If using an external DNS provider, point DNS to the load balancer IP returned by Terraform:
+
+```text
+A odsquiz.example.com -> 136.68.80.85
+```
+
+With Cloudflare, set the zone ID in `terraform.tfvars` instead:
+
+```hcl
+custom_domains     = ["odsquiz.com"]
+cloudflare_zone_id = "your-cloudflare-zone-id"
+```
+
+Before each Terraform operation, expose the Cloudflare API token only for the
+current shell. The token is retrieved from Secret Manager and is not written to
+Terraform configuration or state:
+
+```bash
+export CLOUDFLARE_API_TOKEN="$(gcloud secrets versions access latest --secret=CLOUDFLARE_TERRAFORM_TOKEN --project=odsquiz-dev)"
+```
+
+The Terraform-managed `A` records initially use Cloudflare's DNS-only mode so
+that Google's managed certificate can validate the domain. Do not enable the
+Cloudflare proxy until the certificate status is `ACTIVE`.
+
+3. Apply Terraform:
+
+```bash
+terraform apply
+```
+
+4. Wait for the Google-managed certificate to become active. This can take several minutes after DNS resolves globally.
+
+Check certificate status:
+
+```bash
+gcloud compute ssl-certificates describe odsquiz-managed-cert --global --project=odsquiz-dev
+```
+
+When the certificate is active, HTTP requests on port `80` redirect to HTTPS on port `443`.
+
 Terraform state is stored in:
 
 ```text
@@ -152,13 +222,13 @@ gs://odsquiz-terraform/odsquiz-infrastructure
 Create or update the Cloud Run services, Cloud SQL database stack, and load balancer:
 
 ```bash
-terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http
+terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_url_map.odsquiz_https_redirect -target=google_compute_managed_ssl_certificate.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_target_https_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http -target=google_compute_global_forwarding_rule.odsquiz_https
 ```
 
 Destroy the Cloud Run services, Cloud SQL database stack, and load balancer:
 
 ```bash
-terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http
+terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_url_map.odsquiz_https_redirect -target=google_compute_managed_ssl_certificate.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_target_https_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http -target=google_compute_global_forwarding_rule.odsquiz_https
 ```
 
 ## Outputs
@@ -170,11 +240,9 @@ Terraform returns:
 - `frontend_service_url`
 - `load_balancer_ip`
 - `load_balancer_http_url`
+- `load_balancer_https_urls`
+- `managed_ssl_certificate_name`
 - `database_connection_name`
 - `database_name`
 - `database_user_secret`
 - `database_password_secret`
-
-## Next Infrastructure Step
-
-The next planned infrastructure change is adding a custom domain and HTTPS with a managed certificate.
