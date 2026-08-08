@@ -1,0 +1,25 @@
+name: Manage Billable Development Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Start resources or stop and delete them."
+        required: true
+        default: "start"
+        type: choice
+        options:
+          - start
+          - stop
+
+jobs:
+  manage:
+    uses: odsquiz-io/odsquiz-workflows/.github/workflows/terraform-billable-infrastructure.yaml@main
+    with:
+      action: ${{ inputs.action }}
+      project_id: ${{ vars.GCP_PROJECT_ID }}
+      workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+    permissions:
+      contents: read
+      id-token: write
