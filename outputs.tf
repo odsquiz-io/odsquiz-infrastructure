@@ -23,6 +23,16 @@ output "load_balancer_http_url" {
   value       = "http://${google_compute_global_address.odsquiz_lb.address}"
 }
 
+output "load_balancer_https_urls" {
+  description = "HTTPS URLs for the configured custom domains."
+  value       = [for domain in var.custom_domains : "https://${domain}"]
+}
+
+output "managed_ssl_certificate_name" {
+  description = "Managed SSL certificate name when custom domains are configured."
+  value       = length(var.custom_domains) > 0 ? google_compute_managed_ssl_certificate.odsquiz[0].name : null
+}
+
 output "database_connection_name" {
   description = "Cloud SQL instance connection name."
   value       = google_sql_database_instance.main.connection_name

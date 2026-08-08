@@ -85,6 +85,10 @@ resource "google_cloud_run_v2_service" "auth" {
     google_project_iam_member.cloud_run_secret_accessor,
     google_project_iam_member.cloud_run_sql_client,
     google_project_service.run,
+    # The service runs migrations during startup, so its database and login
+    # must exist before Cloud Run creates its first revision.
+    google_sql_database.app,
+    google_sql_user.app,
   ]
 
   lifecycle {
@@ -179,6 +183,10 @@ resource "google_cloud_run_v2_service" "initiatives" {
     google_project_iam_member.cloud_run_secret_accessor,
     google_project_iam_member.cloud_run_sql_client,
     google_project_service.run,
+    # The service runs migrations during startup, so its database and login
+    # must exist before Cloud Run creates its first revision.
+    google_sql_database.app,
+    google_sql_user.app,
   ]
 
   lifecycle {

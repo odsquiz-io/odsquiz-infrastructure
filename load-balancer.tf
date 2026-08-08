@@ -101,9 +101,39 @@ resource "google_compute_url_map" "odsquiz" {
   }
 }
 
+resource "google_compute_url_map" "odsquiz_https_redirect" {
+  count = length(var.custom_domains) > 0 ? 1 : 0
+
+  name = "odsquiz-https-redirect-url-map"
+
+  default_url_redirect {
+    https_redirect         = true
+    redirect_response_code = "MOVED_PERMANENTLY_DEFAULT"
+    strip_query            = false
+  }
+}
+
+resource "google_compute_managed_ssl_certificate" "odsquiz" {
+  count = length(var.custom_domains) > 0 ? 1 : 0
+
+  name = "odsquiz-managed-cert"
+
+  managed {
+    domains = var.custom_domains
+  }
+}
+
 resource "google_compute_target_http_proxy" "odsquiz" {
   name    = "odsquiz-http-proxy"
-  url_map = google_compute_url_map.odsquiz.id
+  url_map = length(var.custom_domains) > 0 ? google_compute_url_map.odsquiz_https_redirect[0].id : google_compute_url_map.odsquiz.id
+}
+
+resource "google_compute_target_https_proxy" "odsquiz" {
+  count = length(var.custom_domains) > 0 ? 1 : 0
+
+  name             = "odsquiz-https-proxy"
+  url_map          = google_compute_url_map.odsquiz.id
+  ssl_certificates = [google_compute_managed_ssl_certificate.odsquiz[0].id]
 }
 
 resource "google_compute_global_forwarding_rule" "odsquiz_http" {
@@ -112,4 +142,14 @@ resource "google_compute_global_forwarding_rule" "odsquiz_http" {
   port_range            = "80"
   load_balancing_scheme = "EXTERNAL_MANAGED"
   target                = google_compute_target_http_proxy.odsquiz.id
+}
+
+resource "google_compute_global_forwarding_rule" "odsquiz_https" {
+  count = length(var.custom_domains) > 0 ? 1 : 0
+
+  name                  = "odsquiz-https-forwarding-rule"
+  ip_address            = google_compute_global_address.odsquiz_lb.address
+  port_range            = "443"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+  target                = google_compute_target_https_proxy.odsquiz[0].id
 }

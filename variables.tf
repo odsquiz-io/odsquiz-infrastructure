@@ -93,3 +93,21 @@ variable "initiatives_api_url" {
   type        = string
   default     = ""
 }
+
+variable "custom_domains" {
+  description = "Domain names served by the external Application Load Balancer HTTPS certificate."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for domain in var.custom_domains : length(trimspace(domain)) > 0])
+    error_message = "custom_domains must contain only non-empty domain names."
+  }
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare zone ID that contains custom_domains. Leave null to manage DNS outside Terraform."
+  type        = string
+  default     = "f9beaa8c263a4c96fea2ce76de1093f2"
+  nullable    = true
+}
