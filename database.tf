@@ -20,6 +20,10 @@ resource "google_sql_database_instance" "main" {
     }
   }
 
+  timeouts {
+    create = "30m"
+  }
+
   depends_on = [google_project_service.sqladmin]
 }
 
