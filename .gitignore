@@ -4,3 +4,7 @@
 crash.log
 *.tfvars
 .terraform.lock.hcl
+
+*.md
+!README.md
+!readme.md

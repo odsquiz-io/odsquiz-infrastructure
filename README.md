@@ -217,12 +217,45 @@ Terraform state is stored in:
 gs://odsquiz-terraform/odsquiz-infrastructure
 ```
 
+## On-Demand Billable Infrastructure
+
+The **Manage Billable Development Infrastructure** GitHub Actions workflow can
+start or stop the development Cloud Run services, Cloud SQL database stack, and
+load balancer. It runs the shared `terraform-billable-infrastructure.yaml`
+workflow from `odsquiz-workflows` with GitHub OIDC; no Google service-account
+key or Cloudflare token is stored in GitHub.
+
+Before running it, configure these repository variables in
+`odsquiz-io/odsquiz-infrastructure`:
+
+- `GCP_PROJECT_ID` — `odsquiz-dev`.
+- `GCP_WORKLOAD_IDENTITY_PROVIDER` — the full Workload Identity Provider
+  resource name trusted for this repository.
+- `GCP_SERVICE_ACCOUNT` — the Google service account that GitHub Actions may
+  impersonate.
+
+The service account must be allowed to administer the selected Cloud Run, Cloud
+SQL, and load-balancer resources, read/write the Terraform state bucket, and
+read the latest version of `CLOUDFLARE_TERRAFORM_TOKEN` from Secret Manager.
+It also needs the GitHub OIDC principal granted `roles/iam.workloadIdentityUser`
+on that service account.
+
+Use the **action** selector to choose **start** or **stop**. Stop permanently
+deletes the Cloud SQL instance and its current data, the Cloud Run services,
+and the load balancer including its reserved IP and managed certificate. The
+next start creates a new IP, updates the existing Cloudflare record through
+Terraform, and may need time for the managed certificate to become active
+again.
+
+Cloudflare DNS resources, Secret Manager secrets, project APIs, IAM bindings,
+and Artifact Registry images are not included in either action.
+
 ## Common Commands
 
 Create or update the Cloud Run services, Cloud SQL database stack, and load balancer:
 
 ```bash
-terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_url_map.odsquiz_https_redirect -target=google_compute_managed_ssl_certificate.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_target_https_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http -target=google_compute_global_forwarding_rule.odsquiz_https
+terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_url_map.odsquiz_https_redirect -target=google_compute_managed_ssl_certificate.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_target_https_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http -target=google_compute_global_forwarding_rule.odsquiz_https -target=cloudflare_dns_record.custom_domain
 ```
 
 Destroy the Cloud Run services, Cloud SQL database stack, and load balancer:
