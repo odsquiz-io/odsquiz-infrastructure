@@ -3,10 +3,12 @@ region  = "us-central1"
 
 auth_service_name      = "odsquiz-auth"
 initiatives_service_name = "odsquiz-initiatives"
+quiz_service_name      = "odsquiz-quiz"
 frontend_service_name  = "odsquiz-frontend"
 
 auth_image        = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-auth:latest"
 initiatives_image = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-initiatives:latest"
+quiz_image        = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-quiz:latest"
 frontend_image    = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-frontend:latest"
 cloud_run_service_account = "applications-sa@odsquiz-dev.iam.gserviceaccount.com"
 
