@@ -236,9 +236,14 @@ Before running it, configure these repository variables in
 
 The service account must be allowed to administer the selected Cloud Run, Cloud
 SQL, and load-balancer resources, read/write the Terraform state bucket, and
-read the latest version of `CLOUDFLARE_TERRAFORM_TOKEN` from Secret Manager.
+read the latest versions of `CLOUDFLARE_TERRAFORM_TOKEN`, `DB_USER`, and
+`DB_PASSWORD` from Secret Manager.
 It also needs the GitHub OIDC principal granted `roles/iam.workloadIdentityUser`
 on that service account.
+
+It also needs `roles/serviceusage.serviceUsageAdmin` so the workflow can enable
+the Cloud Resource Manager API before Terraform refreshes the project-service
+and IAM resources. This API remains enabled when billable resources are stopped.
 
 Use the **action** selector to choose **start** or **stop**. Stop permanently
 deletes the Cloud SQL instance and its current data, the Cloud Run services,

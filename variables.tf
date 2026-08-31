@@ -22,6 +22,12 @@ variable "initiatives_service_name" {
   default     = "odsquiz-initiatives"
 }
 
+variable "quiz_service_name" {
+  description = "Cloud Run service name for the quiz API."
+  type        = string
+  default     = "odsquiz-quiz"
+}
+
 variable "frontend_service_name" {
   description = "Cloud Run service name for the frontend app."
   type        = string
@@ -38,6 +44,12 @@ variable "initiatives_image" {
   description = "Container image for the initiatives service."
   type        = string
   default     = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-initiatives:latest"
+}
+
+variable "quiz_image" {
+  description = "Container image for the quiz service."
+  type        = string
+  default     = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-quiz:latest"
 }
 
 variable "frontend_image" {
@@ -90,6 +102,12 @@ variable "auth_api_url" {
 
 variable "initiatives_api_url" {
   description = "Public URL of the initiatives Cloud Run service used by the frontend."
+  type        = string
+  default     = ""
+}
+
+variable "quiz_api_url" {
+  description = "Public URL of the quiz Cloud Run service used by the frontend."
   type        = string
   default     = ""
 }

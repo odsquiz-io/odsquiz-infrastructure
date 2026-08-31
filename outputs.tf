@@ -8,6 +8,11 @@ output "initiatives_service_url" {
   value       = google_cloud_run_v2_service.initiatives.uri
 }
 
+output "quiz_service_url" {
+  description = "Public URL for the quiz Cloud Run service."
+  value       = google_cloud_run_v2_service.quiz.uri
+}
+
 output "frontend_service_url" {
   description = "Public URL for the frontend Cloud Run service."
   value       = google_cloud_run_v2_service.frontend.uri
