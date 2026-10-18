@@ -13,6 +13,11 @@ output "quiz_service_url" {
   value       = google_cloud_run_v2_service.quiz.uri
 }
 
+output "admin_service_url" {
+  description = "Public URL for the admin Cloud Run service."
+  value       = google_cloud_run_v2_service.admin.uri
+}
+
 output "frontend_service_url" {
   description = "Public URL for the frontend Cloud Run service."
   value       = google_cloud_run_v2_service.frontend.uri
