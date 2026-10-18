@@ -52,6 +52,18 @@ resource "google_compute_region_network_endpoint_group" "quiz" {
   depends_on = [google_project_service.compute]
 }
 
+resource "google_compute_region_network_endpoint_group" "admin" {
+  name                  = "odsquiz-admin-neg"
+  region                = var.region
+  network_endpoint_type = "SERVERLESS"
+
+  cloud_run {
+    service = google_cloud_run_v2_service.admin.name
+  }
+
+  depends_on = [google_project_service.compute]
+}
+
 resource "google_compute_backend_service" "frontend" {
   name                  = "odsquiz-frontend-backend"
   protocol              = "HTTP"
@@ -92,6 +104,16 @@ resource "google_compute_backend_service" "quiz" {
   }
 }
 
+resource "google_compute_backend_service" "admin" {
+  name                  = "odsquiz-admin-backend"
+  protocol              = "HTTP"
+  load_balancing_scheme = "EXTERNAL_MANAGED"
+
+  backend {
+    group = google_compute_region_network_endpoint_group.admin.id
+  }
+}
+
 resource "google_compute_url_map" "odsquiz" {
   name            = "odsquiz-url-map"
   default_service = google_compute_backend_service.frontend.id
@@ -127,6 +149,14 @@ resource "google_compute_url_map" "odsquiz" {
         "/api/quiz/*",
       ]
       service = google_compute_backend_service.quiz.id
+    }
+
+    path_rule {
+      paths = [
+        "/api/admin",
+        "/api/admin/*",
+      ]
+      service = google_compute_backend_service.admin.id
     }
   }
 }

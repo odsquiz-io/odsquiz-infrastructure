@@ -24,9 +24,11 @@ Terraform configuration for the current ODS Quiz development environment on Goog
   - 10 GB SSD
   - backups disabled
 - Application database and database user.
-- Three Cloud Run services:
+- Five Cloud Run services:
   - `odsquiz-auth`
   - `odsquiz-initiatives`
+  - `odsquiz-quiz`
+  - `odsquiz-admin`
   - `odsquiz-frontend`
 - External HTTP Application Load Balancer:
   - global static IP
@@ -46,7 +48,7 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - `versions.tf`: Terraform version, providers, GCS backend, and Google provider config.
 - `services.tf`: Google Cloud APIs, Secret Manager secrets, and project IAM bindings.
 - `database.tf`: Cloud SQL instance, application database, and database user.
-- `apis.tf`: Cloud Run services for auth, initiatives, and frontend.
+- `apis.tf`: Cloud Run services for auth, initiatives, quiz, admin, and frontend.
 - `load-balancer.tf`: External HTTP Application Load Balancer and path routing.
 - `variables.tf`: Input variables and defaults.
 - `outputs.tf`: Service URLs, load balancer URL/IP, database connection name, and secret names.
@@ -75,11 +77,20 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - Receives database settings through environment variables.
 - Ingress is restricted to internal traffic and external Application Load Balancers.
 
+`odsquiz-quiz` and `odsquiz-admin`:
+
+- Images: `var.quiz_image` and `var.admin_image`
+- Same shape as the initiatives service: port `8080`, Cloud SQL Unix socket
+  volume, `JWTSecret`, `DB_USER`, and `DB_PASSWORD` from Secret Manager, and
+  ingress restricted to internal traffic and external Application Load
+  Balancers.
+
 `odsquiz-frontend`:
 
 - Image: `var.frontend_image`
 - Port: `3000`
-- Receives `AUTH_API_URL` and `INITIATIVES_API_URL` for server-side rewrites.
+- Receives `AUTH_API_URL`, `INITIATIVES_API_URL`, `QUIZ_API_URL`, and
+  `ADMIN_API_URL` for server-side rewrites.
 - Ingress is restricted to internal traffic and external Application Load Balancers.
 
 ## Load Balancer Routing
@@ -103,6 +114,10 @@ Path routing:
 /api/auth/*       -> odsquiz-auth
 /api/initiatives  -> odsquiz-initiatives
 /api/initiatives/* -> odsquiz-initiatives
+/api/quiz         -> odsquiz-quiz
+/api/quiz/*       -> odsquiz-quiz
+/api/admin        -> odsquiz-admin
+/api/admin/*      -> odsquiz-admin
 /*                -> odsquiz-frontend
 ```
 
@@ -120,6 +135,8 @@ Images:
 ```hcl
 auth_image        = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-auth:latest"
 initiatives_image = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-initiatives:latest"
+quiz_image        = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-quiz:latest"
+admin_image       = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-admin:latest"
 frontend_image    = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-frontend:latest"
 ```
 
@@ -260,13 +277,13 @@ and Artifact Registry images are not included in either action.
 Create or update the Cloud Run services, Cloud SQL database stack, and load balancer:
 
 ```bash
-terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_url_map.odsquiz_https_redirect -target=google_compute_managed_ssl_certificate.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_target_https_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http -target=google_compute_global_forwarding_rule.odsquiz_https -target=cloudflare_dns_record.custom_domain
+terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.quiz -target=google_cloud_run_v2_service.admin -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_region_network_endpoint_group.quiz -target=google_compute_region_network_endpoint_group.admin -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_backend_service.quiz -target=google_compute_backend_service.admin -target=google_compute_url_map.odsquiz -target=google_compute_url_map.odsquiz_https_redirect -target=google_compute_managed_ssl_certificate.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_target_https_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http -target=google_compute_global_forwarding_rule.odsquiz_https -target=cloudflare_dns_record.custom_domain
 ```
 
 Destroy the Cloud Run services, Cloud SQL database stack, and load balancer:
 
 ```bash
-terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_url_map.odsquiz -target=google_compute_url_map.odsquiz_https_redirect -target=google_compute_managed_ssl_certificate.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_target_https_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http -target=google_compute_global_forwarding_rule.odsquiz_https
+terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.quiz -target=google_cloud_run_v2_service.admin -target=google_cloud_run_v2_service.frontend -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main -target=google_compute_global_address.odsquiz_lb -target=google_compute_region_network_endpoint_group.frontend -target=google_compute_region_network_endpoint_group.auth -target=google_compute_region_network_endpoint_group.initiatives -target=google_compute_region_network_endpoint_group.quiz -target=google_compute_region_network_endpoint_group.admin -target=google_compute_backend_service.frontend -target=google_compute_backend_service.auth -target=google_compute_backend_service.initiatives -target=google_compute_backend_service.quiz -target=google_compute_backend_service.admin -target=google_compute_url_map.odsquiz -target=google_compute_url_map.odsquiz_https_redirect -target=google_compute_managed_ssl_certificate.odsquiz -target=google_compute_target_http_proxy.odsquiz -target=google_compute_target_https_proxy.odsquiz -target=google_compute_global_forwarding_rule.odsquiz_http -target=google_compute_global_forwarding_rule.odsquiz_https
 ```
 
 ## Outputs
@@ -275,6 +292,8 @@ Terraform returns:
 
 - `auth_service_url`
 - `initiatives_service_url`
+- `quiz_service_url`
+- `admin_service_url`
 - `frontend_service_url`
 - `load_balancer_ip`
 - `load_balancer_http_url`
