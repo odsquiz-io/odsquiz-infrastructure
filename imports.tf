@@ -24,6 +24,11 @@ import {
 }
 
 import {
+  to = google_project_service.storage
+  id = "odsquiz-dev/storage.googleapis.com"
+}
+
+import {
   to = google_secret_manager_secret.db_user
   id = "projects/odsquiz-dev/secrets/DB_USER"
 }
