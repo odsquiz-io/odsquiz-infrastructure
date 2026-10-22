@@ -165,6 +165,10 @@ resource "google_cloud_run_v2_service" "initiatives" {
         name  = "DB_SSLMODE"
         value = "disable"
       }
+      env {
+        name  = "STORAGE_BUCKET"
+        value = google_storage_bucket.media.name
+      }
       resources {
         limits = {
           cpu    = "1000m"

@@ -10,6 +10,7 @@ Terraform configuration for the current ODS Quiz development environment on Goog
   - Compute Engine
   - Cloud DNS
   - Secret Manager
+  - Cloud Storage
 - Secret Manager secret containers:
   - `DB_USER`
   - `DB_PASSWORD`
@@ -17,6 +18,13 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - IAM bindings for the Cloud Run service account:
   - Cloud SQL Client
   - Secret Manager Secret Accessor
+  - Storage Object Admin on the media bucket only
+- Cloud Storage media bucket `<project>-media` (`odsquiz-dev-media`) for
+  initiative logos:
+  - regional, in `var.region`
+  - uniform bucket-level access
+  - public access prevention enforced
+  - `force_destroy = false`, no lifecycle rules
 - Cloud SQL PostgreSQL instance:
   - PostgreSQL 16
   - `db-f1-micro`
@@ -48,10 +56,11 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - `versions.tf`: Terraform version, providers, GCS backend, and Google provider config.
 - `services.tf`: Google Cloud APIs, Secret Manager secrets, and project IAM bindings.
 - `database.tf`: Cloud SQL instance, application database, and database user.
+- `storage.tf`: Media bucket and its bucket-level IAM binding.
 - `apis.tf`: Cloud Run services for auth, initiatives, quiz, admin, and frontend.
 - `load-balancer.tf`: External HTTP Application Load Balancer and path routing.
 - `variables.tf`: Input variables and defaults.
-- `outputs.tf`: Service URLs, load balancer URL/IP, database connection name, and secret names.
+- `outputs.tf`: Service URLs, load balancer URL/IP, database connection name, secret names, and media bucket name.
 - `terraform.tfvars.example`: Example values for the dev environment.
 - `imports.tf`: Terraform import blocks for existing APIs and secrets.
 - `main.tf`: currently empty.
@@ -75,6 +84,9 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - Uses Cloud SQL Unix socket volume.
 - Reads `JWTSecret`, `DB_USER`, and `DB_PASSWORD` from Secret Manager.
 - Receives database settings through environment variables.
+- Receives `STORAGE_BUCKET` with the media bucket name. Logos are read and
+  written through the API with the service account; the bucket itself is never
+  public.
 - Ingress is restricted to internal traffic and external Application Load Balancers.
 
 `odsquiz-quiz` and `odsquiz-admin`:
@@ -270,7 +282,13 @@ Terraform, and may need time for the managed certificate to become active
 again.
 
 Cloudflare DNS resources, Secret Manager secrets, project APIs, IAM bindings,
-and Artifact Registry images are not included in either action.
+the media bucket, and Artifact Registry images are not included in either
+action. Stop never deletes the media bucket or the logos in it. Because the
+initiatives service references the bucket, Terraform refreshes it in both
+actions (and start would create it if it were missing), so the workflow service
+account also needs `storage.buckets.get` on the media bucket. Create the bucket
+and its IAM binding with a full `terraform apply` before relying on the
+workflow.
 
 ## Common Commands
 
@@ -303,3 +321,4 @@ Terraform returns:
 - `database_name`
 - `database_user_secret`
 - `database_password_secret`
+- `media_bucket_name`

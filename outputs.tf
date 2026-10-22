@@ -62,3 +62,8 @@ output "database_password_secret" {
   description = "Secret Manager secret name used for the database password."
   value       = var.db_password
 }
+
+output "media_bucket_name" {
+  description = "Cloud Storage bucket that stores initiative logos."
+  value       = google_storage_bucket.media.name
+}
