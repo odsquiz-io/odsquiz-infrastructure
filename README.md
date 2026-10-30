@@ -230,11 +230,17 @@ Before running it, configure these repository variables in
   impersonate.
 
 The service account must be allowed to administer the Cloud Run and Cloud SQL
-resources (including SQL import and export), manage IAM on the database export
-bucket, read the export objects, read/write the Terraform state bucket, and
+resources (including SQL import and export), read/write the Terraform state
+bucket, and
 read the latest versions of `CLOUDFLARE_TERRAFORM_TOKEN`, `DB_USER`, and
 `DB_PASSWORD` from Secret Manager. It also needs the GitHub OIDC principal
 granted `roles/iam.workloadIdentityUser` on that service account.
+
+Terraform grants that service account (`var.workflow_service_account`) the
+bucket access the workflow needs: Legacy Bucket Reader on the media bucket, so
+targeted runs can refresh it, and Legacy Bucket Owner plus Storage Object Viewer
+on the database export bucket, so it can manage the Cloud SQL grant there and
+check whether an export exists.
 
 Use the **action** selector to choose **start** or **stop**:
 

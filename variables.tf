@@ -154,3 +154,9 @@ variable "cloudflare_account_id" {
   default     = "9d8869d791859b5551bb3d83fa91b8ae"
   nullable    = true
 }
+
+variable "workflow_service_account" {
+  description = "Service account impersonated by the billable start/stop workflow."
+  type        = string
+  default     = "github-reusableworkflows-sa@odsquiz-dev.iam.gserviceaccount.com"
+}
