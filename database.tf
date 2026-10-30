@@ -8,7 +8,7 @@ resource "google_sql_database_instance" "main" {
     edition           = "ENTERPRISE"
     tier              = "db-f1-micro"
     availability_type = "ZONAL"
-    disk_type         = "PD_SSD"
+    disk_type         = "PD_HDD"
     disk_size         = 10
 
     backup_configuration {

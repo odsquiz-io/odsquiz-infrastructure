@@ -23,24 +23,14 @@ output "frontend_service_url" {
   value       = google_cloud_run_v2_service.frontend.uri
 }
 
-output "load_balancer_ip" {
-  description = "Global IP address for the external Application Load Balancer."
-  value       = google_compute_global_address.odsquiz_lb.address
-}
-
-output "load_balancer_http_url" {
-  description = "HTTP URL for the external Application Load Balancer."
-  value       = "http://${google_compute_global_address.odsquiz_lb.address}"
-}
-
-output "load_balancer_https_urls" {
-  description = "HTTPS URLs for the configured custom domains."
+output "public_urls" {
+  description = "Public HTTPS URLs served through the Cloudflare router Worker."
   value       = [for domain in var.custom_domains : "https://${domain}"]
 }
 
-output "managed_ssl_certificate_name" {
-  description = "Managed SSL certificate name when custom domains are configured."
-  value       = length(var.custom_domains) > 0 ? google_compute_managed_ssl_certificate.odsquiz[0].name : null
+output "database_instance_name" {
+  description = "Cloud SQL instance name, available even while the billable resources are stopped."
+  value       = var.sql_instance_name
 }
 
 output "database_connection_name" {
@@ -50,7 +40,7 @@ output "database_connection_name" {
 
 output "database_name" {
   description = "Database created inside Cloud SQL."
-  value       = google_sql_database.app.name
+  value       = var.db_name
 }
 
 output "database_user_secret" {
@@ -64,6 +54,11 @@ output "database_password_secret" {
 }
 
 output "media_bucket_name" {
-  description = "Cloud Storage bucket that stores initiative logos."
+  description = "Cloud Storage bucket that stores initiative logos and photos."
   value       = google_storage_bucket.media.name
+}
+
+output "db_exports_bucket_name" {
+  description = "Cloud Storage bucket that keeps the SQL export taken when the billable resources stop."
+  value       = google_storage_bucket.db_exports.name
 }

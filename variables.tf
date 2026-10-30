@@ -131,7 +131,7 @@ variable "admin_api_url" {
 }
 
 variable "custom_domains" {
-  description = "Domain names served by the external Application Load Balancer HTTPS certificate."
+  description = "Domain names routed to the services by the Cloudflare Worker."
   type        = list(string)
   default     = []
 
@@ -145,5 +145,12 @@ variable "cloudflare_zone_id" {
   description = "Cloudflare zone ID that contains custom_domains. Leave null to manage DNS outside Terraform."
   type        = string
   default     = "f9beaa8c263a4c96fea2ce76de1093f2"
+  nullable    = true
+}
+
+variable "cloudflare_account_id" {
+  description = "Cloudflare account ID that owns the router Worker. Leave null to manage routing outside Terraform."
+  type        = string
+  default     = "9d8869d791859b5551bb3d83fa91b8ae"
   nullable    = true
 }
