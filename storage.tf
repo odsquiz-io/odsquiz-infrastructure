@@ -45,3 +45,23 @@ resource "google_storage_bucket_iam_member" "sql_db_exports_object_admin" {
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_sql_database_instance.main.service_account_email_address}"
 }
+
+# The billable start/stop workflow refreshes both buckets, manages the Cloud SQL
+# grant on the export bucket and checks whether an export exists.
+resource "google_storage_bucket_iam_member" "workflow_media_reader" {
+  bucket = google_storage_bucket.media.name
+  role   = "roles/storage.legacyBucketReader"
+  member = "serviceAccount:${var.workflow_service_account}"
+}
+
+resource "google_storage_bucket_iam_member" "workflow_db_exports_owner" {
+  bucket = google_storage_bucket.db_exports.name
+  role   = "roles/storage.legacyBucketOwner"
+  member = "serviceAccount:${var.workflow_service_account}"
+}
+
+resource "google_storage_bucket_iam_member" "workflow_db_exports_reader" {
+  bucket = google_storage_bucket.db_exports.name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${var.workflow_service_account}"
+}
