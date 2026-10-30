@@ -1,7 +1,7 @@
 resource "google_cloud_run_v2_service" "auth" {
   name                 = var.auth_service_name
   location             = var.region
-  ingress              = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  ingress              = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
   deletion_protection  = false
 
@@ -72,6 +72,7 @@ resource "google_cloud_run_v2_service" "auth" {
           cpu    = "1000m"
           memory = "512Mi"
         }
+        cpu_idle = true
       }
     }
 
@@ -99,7 +100,7 @@ resource "google_cloud_run_v2_service" "auth" {
 resource "google_cloud_run_v2_service" "initiatives" {
   name                 = var.initiatives_service_name
   location             = var.region
-  ingress              = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  ingress              = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
   deletion_protection  = false
 
@@ -174,6 +175,7 @@ resource "google_cloud_run_v2_service" "initiatives" {
           cpu    = "1000m"
           memory = "512Mi"
         }
+        cpu_idle = true
       }
     }
 
@@ -201,7 +203,7 @@ resource "google_cloud_run_v2_service" "initiatives" {
 resource "google_cloud_run_v2_service" "frontend" {
   name                 = var.frontend_service_name
   location             = var.region
-  ingress              = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  ingress              = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
   deletion_protection  = false
 
@@ -234,6 +236,7 @@ resource "google_cloud_run_v2_service" "frontend" {
           cpu    = "1000m"
           memory = "512Mi"
         }
+        cpu_idle = true
       }
     }
 
@@ -258,7 +261,7 @@ resource "google_cloud_run_v2_service" "frontend" {
 resource "google_cloud_run_v2_service" "quiz" {
   name                 = var.quiz_service_name
   location             = var.region
-  ingress              = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  ingress              = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
   deletion_protection  = false
 
@@ -329,6 +332,7 @@ resource "google_cloud_run_v2_service" "quiz" {
           cpu    = "1000m"
           memory = "512Mi"
         }
+        cpu_idle = true
       }
     }
 
@@ -355,7 +359,7 @@ resource "google_cloud_run_v2_service" "quiz" {
 resource "google_cloud_run_v2_service" "admin" {
   name                 = var.admin_service_name
   location             = var.region
-  ingress              = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  ingress              = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
   deletion_protection  = false
 
@@ -426,6 +430,7 @@ resource "google_cloud_run_v2_service" "admin" {
           cpu    = "1000m"
           memory = "512Mi"
         }
+        cpu_idle = true
       }
     }
 
