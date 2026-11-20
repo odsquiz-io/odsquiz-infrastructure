@@ -34,6 +34,15 @@ resource "google_cloud_run_v2_service" "auth" {
         }
       }
       env {
+        name = "ORIGIN_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = var.origin_token
+            version = "latest"
+          }
+        }
+      }
+      env {
         name  = "DB_HOST"
         value = "/cloudsql/${google_sql_database_instance.main.connection_name}"
       }
@@ -128,6 +137,15 @@ resource "google_cloud_run_v2_service" "initiatives" {
         value_source {
           secret_key_ref {
             secret  = var.jwt_secret
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "ORIGIN_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = var.origin_token
             version = "latest"
           }
         }
@@ -236,6 +254,15 @@ resource "google_cloud_run_v2_service" "quiz" {
         }
       }
       env {
+        name = "ORIGIN_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = var.origin_token
+            version = "latest"
+          }
+        }
+      }
+      env {
         name  = "DB_HOST"
         value = "/cloudsql/${google_sql_database_instance.main.connection_name}"
       }
@@ -329,6 +356,15 @@ resource "google_cloud_run_v2_service" "admin" {
         value_source {
           secret_key_ref {
             secret  = var.jwt_secret
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "ORIGIN_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = var.origin_token
             version = "latest"
           }
         }

@@ -26,13 +26,22 @@ resource "cloudflare_workers_script" "router" {
   content_sha256     = filesha256("${path.module}/worker/router.js")
   compatibility_date = "2026-10-01"
 
-  bindings = [
-    for name, origin in local.worker_origins : {
-      name = name
-      type = "plain_text"
-      text = origin
-    }
-  ]
+  bindings = concat(
+    [
+      for name, origin in local.worker_origins : {
+        name = name
+        type = "plain_text"
+        text = origin
+      }
+    ],
+    [
+      {
+        name = "ORIGIN_TOKEN"
+        type = "secret_text"
+        text = random_password.origin_token.result
+      }
+    ],
+  )
 }
 
 # Workers routes need a proxied record; 100:: is the documented placeholder for
