@@ -94,6 +94,12 @@ variable "jwt_secret" {
   default     = "JWT_SECRET"
 }
 
+variable "origin_token" {
+  description = "Name of the Secret Manager secret that stores the token the Worker sends to the APIs."
+  type        = string
+  default     = "ORIGIN_TOKEN"
+}
+
 variable "frontend_origin" {
   description = "Public HTTPS URL of the frontend deployment on Vercel, used as the Worker origin for non-API paths."
   type        = string

@@ -67,6 +67,11 @@ export default {
     const upstream = new Request(new URL(url.pathname + url.search, origin), request);
     upstream.headers.set("X-Forwarded-Host", url.host);
     upstream.headers.set("X-Forwarded-Proto", "https");
+    if (route) {
+      upstream.headers.set("X-Origin-Token", env.ORIGIN_TOKEN);
+    } else {
+      upstream.headers.delete("X-Origin-Token");
+    }
 
     const response = await fetch(upstream, { redirect: "manual" });
     if (await isServiceMissing(response)) return offline(Boolean(route));

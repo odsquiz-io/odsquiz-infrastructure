@@ -73,6 +73,28 @@ data "google_secret_manager_secret_version" "db_password" {
   depends_on = [google_project_service.secretmanager]
 }
 
+# The APIs reject requests without this token, so only the Worker reaches them.
+resource "random_password" "origin_token" {
+  length  = 48
+  special = false
+}
+
+resource "google_secret_manager_secret" "origin_token" {
+  secret_id           = var.origin_token
+  deletion_protection = false
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.secretmanager]
+}
+
+resource "google_secret_manager_secret_version" "origin_token" {
+  secret      = google_secret_manager_secret.origin_token.id
+  secret_data = random_password.origin_token.result
+}
+
 resource "google_project_iam_member" "cloud_run_sql_client" {
   project = var.project
   role    = "roles/cloudsql.client"
