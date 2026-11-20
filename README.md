@@ -130,6 +130,16 @@ when the services are destroyed and recreated:
 /*                -> frontend on Vercel (frontend_origin)
 ```
 
+## Email
+
+`privacidade@odsquiz.com`, the contact address in the privacy policy, is
+forwarded by Cloudflare Email Routing to the controller's personal mailbox. It
+is configured in the Cloudflare dashboard (Email Service > Email Routing,
+routing rule `privacidade`), not in Terraform, so the personal destination
+address stays out of this public repository and the Terraform token needs no
+Email Routing permission. Email Routing owns the zone's apex `MX` records, its
+SPF `TXT` record, and the `cf2024-1._domainkey` DKIM record; do not remove them.
+
 ## Current Defaults
 
 Project:
