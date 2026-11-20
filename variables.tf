@@ -34,12 +34,6 @@ variable "admin_service_name" {
   default     = "odsquiz-admin"
 }
 
-variable "frontend_service_name" {
-  description = "Cloud Run service name for the frontend app."
-  type        = string
-  default     = "odsquiz-frontend"
-}
-
 variable "auth_image" {
   description = "Container image for the auth service."
   type        = string
@@ -62,12 +56,6 @@ variable "admin_image" {
   description = "Container image for the admin service."
   type        = string
   default     = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-admin:latest"
-}
-
-variable "frontend_image" {
-  description = "Container image for the frontend service."
-  type        = string
-  default     = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-frontend:latest"
 }
 
 variable "cloud_run_service_account" {
@@ -106,28 +94,9 @@ variable "jwt_secret" {
   default     = "JWT_SECRET"
 }
 
-variable "auth_api_url" {
-  description = "Public URL of the auth Cloud Run service used by the frontend."
+variable "frontend_origin" {
+  description = "Public HTTPS URL of the frontend deployment on Vercel, used as the Worker origin for non-API paths."
   type        = string
-  default     = ""
-}
-
-variable "initiatives_api_url" {
-  description = "Public URL of the initiatives Cloud Run service used by the frontend."
-  type        = string
-  default     = ""
-}
-
-variable "quiz_api_url" {
-  description = "Public URL of the quiz Cloud Run service used by the frontend."
-  type        = string
-  default     = ""
-}
-
-variable "admin_api_url" {
-  description = "Public URL of the admin Cloud Run service used by the frontend."
-  type        = string
-  default     = ""
 }
 
 variable "custom_domains" {

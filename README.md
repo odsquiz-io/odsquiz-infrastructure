@@ -37,14 +37,14 @@ Terraform configuration for the current ODS Quiz development environment on Goog
   - 10 GB HDD
   - backups disabled
 - Application database and database user.
-- Five Cloud Run services:
+- Four Cloud Run API services:
   - `odsquiz-auth`
   - `odsquiz-initiatives`
   - `odsquiz-quiz`
   - `odsquiz-admin`
-  - `odsquiz-frontend`
 - Cloudflare routing for `custom_domains`:
-  - `odsquiz-router` Worker that forwards each path to its Cloud Run service
+  - `odsquiz-router` Worker that forwards API paths to their Cloud Run service
+    and every other path to the frontend on Vercel (`var.frontend_origin`)
   - proxied `AAAA 100::` placeholder record and a Workers route per domain
   - HTTP-to-HTTPS redirect done by the Worker
   - a maintenance page (HTML) or `503` JSON while the services are stopped
@@ -55,7 +55,7 @@ Terraform configuration for the current ODS Quiz development environment on Goog
 - `services.tf`: Google Cloud APIs, Secret Manager secrets, and project IAM bindings.
 - `database.tf`: Cloud SQL instance, application database, and database user.
 - `storage.tf`: Media and database export buckets and their bucket-level IAM bindings.
-- `apis.tf`: Cloud Run services for auth, initiatives, quiz, admin, and frontend.
+- `apis.tf`: Cloud Run services for auth, initiatives, quiz, and admin.
 - `cloudflare.tf`: Cloudflare router Worker, its DNS record and Workers routes.
 - `worker/router.js`: Worker source with the path routing table.
 - `variables.tf`: Input variables and defaults.
@@ -96,13 +96,9 @@ instance.
 - Same shape as the initiatives service: port `8080`, Cloud SQL Unix socket
   volume, and `JWTSecret`, `DB_USER`, and `DB_PASSWORD` from Secret Manager.
 
-`odsquiz-frontend`:
-
-- Image: `var.frontend_image`
-- Port: `3000`
-- Receives `AUTH_API_URL`, `INITIATIVES_API_URL`, `QUIZ_API_URL`, and
-  `ADMIN_API_URL` for server-side rewrites, which are only used outside the
-  Worker.
+The frontend (`odsquiz-frontend`) is not managed here: it is deployed on
+Vercel from its repository, and its production URL is set in
+`frontend_origin`.
 
 ## Routing
 
@@ -125,7 +121,7 @@ when the services are destroyed and recreated:
 /api/quiz/*       -> odsquiz-quiz
 /api/admin        -> odsquiz-admin
 /api/admin/*      -> odsquiz-admin
-/*                -> odsquiz-frontend
+/*                -> frontend on Vercel (frontend_origin)
 ```
 
 ## Current Defaults
@@ -144,7 +140,6 @@ auth_image        = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-auth
 initiatives_image = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-initiatives:latest"
 quiz_image        = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-quiz:latest"
 admin_image       = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-admin:latest"
-frontend_image    = "us-central1-docker.pkg.dev/odsquiz-dev/odsquiz/odsquiz-frontend:latest"
 ```
 
 Database:
@@ -264,13 +259,13 @@ between when needed):
 
 ```bash
 terraform apply -target=google_sql_database_instance.main -target=google_sql_database.app -target=google_sql_user.app -target=google_storage_bucket_iam_member.sql_db_exports_object_admin
-terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.quiz -target=google_cloud_run_v2_service.admin -target=google_cloud_run_v2_service.frontend
+terraform apply -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.quiz -target=google_cloud_run_v2_service.admin
 ```
 
 Destroy the services and the database stack (export first to keep the data):
 
 ```bash
-terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.quiz -target=google_cloud_run_v2_service.admin -target=google_cloud_run_v2_service.frontend -target=google_storage_bucket_iam_member.sql_db_exports_object_admin -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main
+terraform destroy -target=google_cloud_run_v2_service.auth -target=google_cloud_run_v2_service.initiatives -target=google_cloud_run_v2_service.quiz -target=google_cloud_run_v2_service.admin -target=google_storage_bucket_iam_member.sql_db_exports_object_admin -target=google_sql_user.app -target=google_sql_database.app -target=google_sql_database_instance.main
 ```
 
 ## Outputs
@@ -281,7 +276,6 @@ Terraform returns:
 - `initiatives_service_url`
 - `quiz_service_url`
 - `admin_service_url`
-- `frontend_service_url`
 - `public_urls`
 - `database_instance_name`
 - `database_connection_name`
