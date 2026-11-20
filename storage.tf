@@ -37,6 +37,16 @@ resource "google_storage_bucket" "db_exports" {
     }
   }
 
+  lifecycle_rule {
+    condition {
+      days_since_noncurrent_time = 30
+      with_state                 = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
   depends_on = [google_project_service.storage]
 }
 
