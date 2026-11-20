@@ -8,7 +8,7 @@ locals {
     INITIATIVES_ORIGIN = "https://${var.initiatives_service_name}-${local.run_url_suffix}"
     QUIZ_ORIGIN        = "https://${var.quiz_service_name}-${local.run_url_suffix}"
     ADMIN_ORIGIN       = "https://${var.admin_service_name}-${local.run_url_suffix}"
-    FRONTEND_ORIGIN    = "https://${var.frontend_service_name}-${local.run_url_suffix}"
+    FRONTEND_ORIGIN    = var.frontend_origin
   }
 
   cloudflare_domains = var.cloudflare_zone_id == null || var.cloudflare_account_id == null ? toset([]) : toset(var.custom_domains)

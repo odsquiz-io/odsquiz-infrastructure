@@ -18,11 +18,6 @@ output "admin_service_url" {
   value       = google_cloud_run_v2_service.admin.uri
 }
 
-output "frontend_service_url" {
-  description = "Public URL for the frontend Cloud Run service."
-  value       = google_cloud_run_v2_service.frontend.uri
-}
-
 output "public_urls" {
   description = "Public HTTPS URLs served through the Cloudflare router Worker."
   value       = [for domain in var.custom_domains : "https://${domain}"]

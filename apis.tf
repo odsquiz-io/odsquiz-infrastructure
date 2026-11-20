@@ -200,64 +200,6 @@ resource "google_cloud_run_v2_service" "initiatives" {
   }
 }
 
-resource "google_cloud_run_v2_service" "frontend" {
-  name                 = var.frontend_service_name
-  location             = var.region
-  ingress              = "INGRESS_TRAFFIC_ALL"
-  invoker_iam_disabled = true
-  deletion_protection  = false
-
-  template {
-    service_account = var.cloud_run_service_account
-
-    containers {
-      image = var.frontend_image
-      ports {
-        container_port = 3000
-      }
-      env {
-        name  = "AUTH_API_URL"
-        value = var.auth_api_url != "" ? var.auth_api_url : google_cloud_run_v2_service.auth.uri
-      }
-      env {
-        name  = "INITIATIVES_API_URL"
-        value = var.initiatives_api_url != "" ? var.initiatives_api_url : google_cloud_run_v2_service.initiatives.uri
-      }
-      env {
-        name  = "QUIZ_API_URL"
-        value = var.quiz_api_url != "" ? var.quiz_api_url : google_cloud_run_v2_service.quiz.uri
-      }
-      env {
-        name  = "ADMIN_API_URL"
-        value = var.admin_api_url != "" ? var.admin_api_url : google_cloud_run_v2_service.admin.uri
-      }
-      resources {
-        limits = {
-          cpu    = "1000m"
-          memory = "512Mi"
-        }
-        cpu_idle = true
-      }
-    }
-
-    scaling {
-      min_instance_count = 1
-      max_instance_count = 1
-    }
-  }
-
-  depends_on = [
-    google_cloud_run_v2_service.auth,
-    google_cloud_run_v2_service.initiatives,
-    google_cloud_run_v2_service.quiz,
-    google_cloud_run_v2_service.admin,
-  ]
-
-  lifecycle {
-    ignore_changes = [scaling]
-  }
-}
-
 resource "google_cloud_run_v2_service" "quiz" {
   name                 = var.quiz_service_name
   location             = var.region
